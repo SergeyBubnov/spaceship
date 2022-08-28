@@ -111,15 +111,13 @@ def divide_frame(dataf,columns,teacher_column, random_state_sample = 1,random_st
     y_test = dataf_extract_test.loc[:,teacher_column].values
     pnp = Perceptron(eta,iter,random_state_ppn)
 
-    print("variables inited")
     pnp.fit(X,y)
-    print("plotting")
     if plot:
         plot_decision_regions(X_test, y_test, classifier=pnp,resolution = res)
         plt.xlabel(columns[0])
         plt.ylabel(columns[1])
         plt.legend(loc='upper left')
-    print("testing")
+
     dataf_extract_test["prediction"] = pnp.predict(dataf_extract_test.loc[:,columns])
     errors = abs(dataf_extract_test["prediction"]-dataf_extract_test[teacher_column])/2
     
