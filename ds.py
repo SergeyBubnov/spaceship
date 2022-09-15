@@ -3,6 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sb
 from matplotlib.colors import ListedColormap
+from sklearn.svm import SVC
+
 
 #basic Perceptron for linear division of data
 class Perceptron(object):
@@ -220,12 +222,16 @@ class LogisticRegressionGD(object):
         # equivalent to:
         # return np.where(self.activation(self.net_input(X)) >= 0.5, 1, 0)
 
-def plot_decision_regions(X, y, classifier, resolution=0.01):
+def plot_decision_regions(X, y, classifier, resolution=0.01,show = 0):
     
     # setup marker generator and color map
     markers = ('s', 'x', 'o', '^', 'v')
     colors = ('red', 'blue', 'lightgreen', 'gray', 'cyan')
     cmap = ListedColormap(colors[:len(np.unique(y))])
+    
+    if(show):
+      X = X[y == show]
+      y = y[y == show]
 
     # plot the decision surface
     x1_min, x1_max = X[:, 0].min() - 1, X[:, 0].max() + 1
@@ -248,9 +254,8 @@ def plot_decision_regions(X, y, classifier, resolution=0.01):
                     label=cl, 
                     edgecolor='black')
 
-
 #dataf should have column teacher_column, linear division
-def divide_frame(dataf,columns,teacher_column, classifier = 'Perceptron', random_state_sample = 1,random_state_ppn = 1,fraction = 0.7,eta = 0.1, iter = 50, plot = False,res = 0.1):
+def divide_frame(dataf,columns,teacher_column, classifier = 'Perceptron', kernel_ = 'rbf', random_state_sample = 1,random_state_ppn = 1,fraction = 0.7,eta = 0.1, iter = 50, gamma_ = 1, c = 1, degree_ = 3, plot = False,res = 0.1, show_value = 0):
     dataf_extract = dataf.loc[:,columns+[teacher_column]]
     dataf_extract_train = dataf_extract.sample(random_state = random_state_sample, frac = fraction)
     dataf_extract_test = dataf_extract.drop(dataf_extract_train.index)
@@ -265,12 +270,14 @@ def divide_frame(dataf,columns,teacher_column, classifier = 'Perceptron', random
       pnp = AdalineGD(eta,iter,random_state_ppn)
     elif classifier == "LogisticRegression":
       pnp = LogisticRegressionGD(eta,iter,random_state_ppn)
+    elif classifier == "SVC":
+      pnp = SVC(kernel= kernel_, random_state=random_state_ppn, gamma=gamma_, C=c, degree = degree_)
     else:
       print('Unexpected type of classifier')
 
     pnp.fit(X,y)
     if plot:
-        plot_decision_regions(X_test, y_test, classifier=pnp,resolution = res)
+        plot_decision_regions(X_test, y_test, classifier=pnp,resolution = res,show= show_value)
         plt.xlabel(columns[0])
         plt.ylabel(columns[1])
         plt.legend(loc='upper left')
