@@ -4,6 +4,12 @@ import matplotlib.pyplot as plt
 import seaborn as sb
 from matplotlib.colors import ListedColormap
 from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+#%pip install pydotplus
+from pydotplus import graph_from_dot_data
+from sklearn.tree import export_graphviz
+from IPython.display import Image, display
 
 
 #basic Perceptron for linear division of data
@@ -255,7 +261,14 @@ def plot_decision_regions(X, y, classifier, resolution=0.01,show = 0):
                     edgecolor='black')
 
 #dataf should have column teacher_column, linear division
-def divide_frame(dataf,columns,teacher_column, classifier = 'Perceptron', kernel_ = 'rbf', random_state_sample = 1,random_state_ppn = 1,fraction = 0.7,eta = 0.1, iter = 50, gamma_ = 1, c = 1, degree_ = 3, plot = False,res = 0.1, show_value = 0):
+def divide_frame(dataf,columns,teacher_column, classifier = 'Perceptron', kernel_ = 'rbf', 
+                  random_state_sample = 1,random_state_ppn = 1, fraction = 0.7,
+                  eta = 0.1, iter = 50,
+                  gamma_ = 1, c = 1,
+                  degree_ = 3,
+                  neighbors = 5, dimension  = 2, metric_='minkowski',
+                  criterion_tree = "gini", depth = 5,
+                  plot = False,res = 0.1, show_value = 0):
     dataf_extract = dataf.loc[:,columns+[teacher_column]]
     dataf_extract_train = dataf_extract.sample(random_state = random_state_sample, frac = fraction)
     dataf_extract_test = dataf_extract.drop(dataf_extract_train.index)
@@ -272,6 +285,10 @@ def divide_frame(dataf,columns,teacher_column, classifier = 'Perceptron', kernel
       pnp = LogisticRegressionGD(eta,iter,random_state_ppn)
     elif classifier == "SVC":
       pnp = SVC(kernel= kernel_, random_state=random_state_ppn, gamma=gamma_, C=c, degree = degree_)
+    elif classifier == "KNN":
+      pnp = KNeighborsClassifier(n_neighbors=neighbors, p=dimension, metric=metric_)
+    elif classifier == "Tree":
+      pnp = DecisionTreeClassifier(criterion=criterion_tree, max_depth=depth, random_state=random_state_ppn)
     else:
       print('Unexpected type of classifier')
 
@@ -281,6 +298,12 @@ def divide_frame(dataf,columns,teacher_column, classifier = 'Perceptron', kernel
         plt.xlabel(columns[0])
         plt.ylabel(columns[1])
         plt.legend(loc='upper left')
+    
+    if(classifier == 'Tree'):
+      dot_data = export_graphviz(pnp, filled = True, rounded = True, class_names = ['-1.0', '1.0'], feature_names = columns, out_file = None)
+      graph = graph_from_dot_data(dot_data)
+      im = Image(graph.create_jpeg())
+      display(im)
 
     dataf_extract_test["prediction"] = pnp.predict(dataf_extract_test.loc[:,columns])
     errors = (dataf_extract_test["prediction"]-dataf_extract_test[teacher_column])/2
@@ -305,7 +328,5 @@ def divide_frame(dataf,columns,teacher_column, classifier = 'Perceptron', kernel
     print("index = predicted, columns = factual, in %:")
     
     print(table)
-    
-    #percent = 100*errors.sum()/errors.count()
-    #print(errors.count(), f" total in test, errors: {percent:.2f}%")
+
     return pnp
