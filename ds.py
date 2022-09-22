@@ -269,10 +269,14 @@ def divide_frame(dataf,columns,teacher_column, classifier = 'Perceptron', kernel
                   neighbors = 5, dimension  = 2, metric_='minkowski',
                   criterion_tree = "gini", depth = 5,
                   plot = False,res = 0.1, show_value = 0):
-    dataf_extract = dataf.loc[:,columns+[teacher_column]]
-    dataf_extract_train = dataf_extract.sample(random_state = random_state_sample, frac = fraction)
-    dataf_extract_test = dataf_extract.drop(dataf_extract_train.index)
     
+    dataf_extract = dataf.loc[:,columns+[teacher_column]]
+    if fraction<1:
+      dataf_extract_train = dataf_extract.sample(random_state = random_state_sample, frac = fraction)
+      dataf_extract_test = dataf_extract.drop(dataf_extract_train.index)
+    else:
+      dataf_extract_train = dataf_extract_test = dataf_extract
+
     X = dataf_extract_train.loc[:,columns].values
     X_test = dataf_extract_test.loc[:,columns].values
     y = dataf_extract_train.loc[:,teacher_column].values
@@ -328,5 +332,8 @@ def divide_frame(dataf,columns,teacher_column, classifier = 'Perceptron', kernel
     print("index = predicted, columns = factual, in %:")
     
     print(table)
+
+    if (classifier == 'Perceptron' or classifier == 'Adaline' or classifier == 'LogisticRegression'): 
+      print("     w = ",pnp.w_)
 
     return pnp
