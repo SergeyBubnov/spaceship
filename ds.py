@@ -261,7 +261,7 @@ def plot_decision_regions(X, y, classifier, resolution=0.01,show = 0):
                     edgecolor='black')
 
 #dataf should have column teacher_column, linear division
-def divide_frame(dataf,columns,teacher_column, classifier = 'Perceptron', kernel_ = 'rbf', 
+def divide_frame(dataf,columns,teacher_column, classifier = 'Perceptron', kernel_ = 'rbf', #linear’, ‘poly’, ‘rbf’, ‘sigmoid’, ‘precomputed’
                   random_state_sample = 1,random_state_ppn = 1, fraction = 0.7,
                   eta = 0.1, iter = 50,
                   gamma_ = 1, c = 1,
