@@ -339,59 +339,93 @@ def divide_frame(dataf,columns,teacher_column, classifier = 'Perceptron', kernel
 
     return pnp
 
-def LDA(X,y,features_):
-  sc = StandardScaler()
-  X_std = sc.fit_transform(X)
+def LDA_eigen(X,y,plot):
 
-  np.set_printoptions(precision = 4)
+  if plot:
+    np.set_printoptions(precision = 4)
+    print("unique values of y: ",np.unique(y),"\n")
+  
   mean_vecs = []
-  labels = [-1.0,1.0]
+  labels = np.unique(y)
   for label in range(1,len(labels)+1):
-      mean_vecs.append(np.mean(X_std[y == labels[label-1]],axis = 0))
-      print('MV %s: %s\n'%(label,mean_vecs[label-1]))
+      mean_vecs.append(np.mean(X[y == labels[label-1]],axis = 0))
+      if plot:
+        print('MV %s: %s\n'%(label,mean_vecs[label-1]))
 
-  d = len(features_)
+  d = len(X[0])
   S_W = np.zeros((d,d))
   for label , mv in zip(labels , mean_vecs):
       class_scatter = np.zeros((d,d))
-      for row in X_std[y == label]:
+      for row in X[y == label]:
           row, mv = row.reshape(d,1), mv.reshape(d,1)
           class_scatter += (row - mv).dot((row - mv).T)
       S_W += class_scatter
-  #print ('Матрица раcсеяния внутри классов: %sx%s'%(S_W.shape[0], S_W.shape[1]))
+  if plot:
+    print ('Матрица раcсеяния внутри классов: %sx%s'%(S_W.shape[0], S_W.shape[1]))
 
   S_W = np.zeros((d,d))
   for label,mv in zip(labels, mean_vecs):
-      class_scatter = np.cov(X_std[y==label].T)
+      class_scatter = np.cov(X[y==label].T)
       S_W += class_scatter
-  #print('Масштабированная матрица рассеяния внутри классов: %sx%s' % (S_W.shape[0], S_W.shape[1]) )
+  if plot:
+    print('Масштабированная матрица рассеяния внутри классов: %sx%s' % (S_W.shape[0], S_W.shape[1]) )
 
-  mean_overall = np.mean(X_std, axis= 0)
+  mean_overall = np.mean(X, axis= 0)
   S_B = np.zeros((d,d))
   for i , mean_vec in enumerate(mean_vecs):
-      n = X_std[y==i+1,:].shape[0]
+      n = X[y==i+1,:].shape[0]
       mean_vec = mean_vec.reshape(d,1)
       mean_overall = mean_overall.reshape(d,1)
       S_B +=n*(mean_vec - mean_overall).dot((mean_vec - mean_overall).T)
-  #print('Матрица рассеяния между классами: %sx%s'%(S_B.shape[0],S_B.shape[1]))
+  if plot:
+    print('Матрица рассеяния между классами: %sx%s'%(S_B.shape[0],S_B.shape[1]))
 
   eigen_vals, eigen_vecs = np.linalg.eig(np.linalg.inv(S_W).dot(S_B))
 
   eigen_pairs = [(np.abs(eigen_vals[i]),eigen_vecs[:,i]) for i in range(len(eigen_vals))]
   eigen_pairs=sorted(eigen_pairs, key = lambda k: k[0], reverse = True)
 
-  print('Собственные значения в порядке убывания:\n')
-  for eigen_val in eigen_pairs:
-      print(eigen_val[0])
+  if plot:
+    print('Собственные значения в порядке убывания:\n')
+    for eigen_val in eigen_pairs:
+        print(eigen_val[0])
 
   tot = sum(eigen_vals.real)
   discr = [(i/tot) for i in sorted (eigen_vals.real, reverse = True)]
   cum_discr = np.cumsum(discr)
-  size = len(features_)+1
-  plt.bar(range(1,size),discr, alpha = 0.5, align = 'center',label = 'индивидуальная "Различимость"')
-  plt.ylabel("Коэффициент 'различимости'")
-  plt.xlabel('Линейные дискриминанты')
-  plt.legend(loc = 'best')
-  plt.tight_layout()
-  plt.show()
+  size = d+1
+  if plot:
+    plt.bar(range(1,size),discr, alpha = 0.5, align = 'center',label = 'индивидуальная "Различимость"')
+    plt.ylabel("Коэффициент 'различимости'")
+    plt.xlabel('Линейные дискриминанты')
+    plt.legend(loc = 'best')
+    plt.tight_layout()
+    plt.show()
   return eigen_pairs
+
+
+
+class LDA:
+
+  def __init__(self, plot = False):
+
+    self.plot = plot
+    self.eigen_pairs = []
+    self.w = []
+
+  def fit(self,X,y = None,params = None):
+    #print("LDA fit\n")
+    self.eigen_pairs = LDA_eigen(X,y,self.plot)
+    self.w = self.eigen_pairs[0][1][:,np.newaxis].real
+    if self.plot:
+      print('Матрица W:\n',self.w)
+        
+    return self
+    
+  def transform(self,X,params = None):
+    #print("LDA transform\n")
+    return X.dot(self.w)
+
+  def fit_transform(self,X,y = None,params = None):
+    #print("LDA fit_transform\n")
+    return self.fit(X,y).transform(X)
