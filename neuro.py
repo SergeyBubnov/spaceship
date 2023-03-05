@@ -150,7 +150,10 @@ class NeuralNetMLP(object):
         self
         """
         n_output = np.unique(y_train).shape[0]  # number of class labels
+        print("%d classes identified"%n_output)
+        print("all classes: ",np.unique(y_train))
         n_features = X_train.shape[1]
+        print("%d features identified\n"%n_features)
 
         ########################
         # Weight initialization
@@ -170,6 +173,8 @@ class NeuralNetMLP(object):
         self.eval_ = {'cost': [], 'train_acc': [], 'valid_acc': []}
 
         y_train_enc = self._onehot(y_train, n_output)
+        print("y_train_enc")
+        print(y_train_enc[:10])
 
         # iterate over training epochs
         for i in range(self.epochs):
